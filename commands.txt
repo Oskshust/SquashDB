@@ -1,0 +1,15 @@
+# setting up nodes:
+
+sudo docker run --name cas1 -p 9042:9042 -e CASSANDRA_CLUSTER_NAME=MyCluster -d cassandra
+sudo docker inspect --format='{{.NetworkSettings.IPAddress}}' cas1
+sudo docker run --name cas2 -e CASSANDRA_SEEDS="$(sudo docker inspect --format='{{.NetworkSettings.IPAddress}}' cas1)" -e CASSANDRA_CLUSTER_NAME=MyCluster -d cassandra
+
+sudo docker container ls
+sudo docker exec -it CONTAINER_NAME cqlsh
+sudo CREATE KEYSPACE IF NOT EXISTS squash WITH REPLICATION={'class': 'SimpleStrategy', 'replication_factor': 1};
+
+# deleting:
+sudo docker stop cas1
+sudo docker rm cas1
+sudo docker stop cas2
+sudo docker rm cas2

@@ -1,8 +1,0 @@
-# Stop all Cassandra containers
-docker stop $(docker ps -a -q --filter ancestor=my-cassandra-cluster)
-
-# Remove all Cassandra containers
-docker rm $(docker ps -a -q --filter ancestor=my-cassandra-cluster)
-
-# Remove all Cassandra data volumes
-docker volume rm $(docker volume ls -q --filter name=cassandra)

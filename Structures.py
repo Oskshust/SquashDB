@@ -23,7 +23,7 @@ class CassandraClient:
         self.session = cluster.connect('squash')
 
     def setup(self):
-        create_reservations = "CREATE TABLE IF NOT EXISTS reservations (reservation_id int, user_id int, court_id int, " \
+        create_reservations = "CREATE TABLE IF NOT EXISTS reservations (reservation_id int, user_id text, court_id int, " \
                        "equipment text, start_time text, end_time text, PRIMARY KEY (reservation_id));"
         self.session.execute(create_reservations)
 
@@ -47,26 +47,34 @@ class CassandraClient:
         rows = self.session.execute(sanity_check)
         for row in rows:
             print(row)
+        
+    def get_reservation_id(self):
+        reservation_id_query = "Select max(reservation_id) from reservations"
+        reservation_id = self.session.execute(reservation_id_query)
+        reservation_id = reservation_id.all()[0].system_max_reservation_id
+        print(reservation_id)
+        return reservation_id
+    
+    def get_courts(self):
+        courts_query = "SELECT * FROM reservations"
+        
+        reservations = self.session.execute(courts_query)
+        reservations = reservations.all()
+        return [Reservation(row.reservation_id, row.user_id, row.court_id, row.equipment, row.start_time, row.end_time) for row in reservations]
 
     def create_reservation(self, reservation):
         # check if there is free court for this hour
-        occupied_courts = "SELECT * FROM reservations WHERE start_time = %s;"
-        rows = self.session.execute(occupied_courts, reservation.start_time)
-        occ = [row.court_id for row in rows]
-
-        all_courts_q = "SELECT * FROM courts;"
-        rows = self.session.execute(all_courts_q)
-        all_courts = [row.court_id for row in rows]
-
-        if len(occ) == len(all_courts):
-            print("There is no court left for this hour, try different one, or try again later.")
-
-        else:
-            court_to_be_reserved = list(set(all_courts).difference(occ))[0]
-            query = "INSERT INTO reservations (reservation_id, user_id, court_id, equipment, start_time, end_time) VALUES" \
-                    "(%s, %s, %s, %s, %s, %s)"
-            self.session.execute(query, (reservation.reservation_id, reservation.user_id, court_to_be_reserved, reservation.equipment, reservation.start_time, reservation.end_time))
-
+        occupied_court_query = f"SELECT * FROM reservations WHERE start_time = '{reservation.start_time}';"
+        results = self.session.execute(occupied_court_query)
+        for row in results.all():
+            if reservation.court_id == row.court_id:
+                return "This court is already occupied"
+            
+        query = "INSERT INTO reservations (reservation_id, user_id, court_id, equipment, start_time, end_time) VALUES" \
+                "(%s, %s, %s, %s, %s, %s)"
+        result = self.session.execute(query, (reservation.reservation_id, reservation.user_id,reservation.court_id, reservation.equipment, reservation.start_time, reservation.end_time))
+        result = result.all()
+        return result
     def equipment_update_reservation(self, reservation):
         query = "UPDATE reservations SET equipment = %s WHERE reservation_id = %s"
         self.session.execute(query, (reservation.equipment, reservation.reservation_id))
@@ -83,4 +91,18 @@ class CassandraClient:
 
     def cancel_reservation(self, reservation_id):
         query = "DELETE FROM reservations WHERE reservation_id = %s"
-        self.session.execute(query, (reservation_id,))
+        result = self.session.execute(query, (reservation_id,))
+        result = result.all()
+        return result
+    
+    def cancel_all(self):
+        drop_table = "Drop table reservations;"
+        self.session.execute(drop_table)
+        create_reservations = "CREATE TABLE IF NOT EXISTS reservations (reservation_id int, user_id text, court_id int, " \
+                       "equipment text, start_time text, end_time text, PRIMARY KEY (reservation_id));"
+        self.session.execute(create_reservations)
+
+        reservation_by_start_time = "CREATE INDEX IF NOT EXISTS reservations_by_time ON reservations (start_time);"
+        self.session.execute(reservation_by_start_time)
+    
+

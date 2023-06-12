@@ -1,12 +1,6 @@
 from Structures import CassandraClient, Reservation
 
 
-# TODO stress tests
-# write methods for performing stress tests provided in requirements - 5 tests
-
-# TODO update readme, provide schemas
-
-
 def main():
     # connection [WIP]
     nodes = ['172.17.0.2', '172.17.0.3']
@@ -16,7 +10,6 @@ def main():
 
     current_reservation_id = 1
 
-    is_working = True
     print("Welcome in the reservation system for SquashDB. What would you like to do?")
     print("1. Make a reservation")
     print("2. Update a reservation")
@@ -24,13 +17,15 @@ def main():
     print("4. Cancel a reservation")
     print("5. Exit the app")
     choice = input("Enter your choice: ")
-    while(is_working):
+    while True:
         # MAKING A RESERVATION
         if choice == '1':
             user_id = int(input("Enter your user ID: "))
             equipment = input("Enter the equipment you would like to reserve: ")
             start_time = input("Enter the start time of your reservation: ")
             end_time = input("Enter the end time of your reservation: ")
+            while start_time == end_time:
+                end_time = input("Enter end time different than start time: ")
             reservation = Reservation(current_reservation_id, user_id, 0, equipment, start_time, end_time)
             cassandra_client.create_reservation(reservation)
             print(f"Reservation created with ID: {current_reservation_id}")
@@ -42,6 +37,8 @@ def main():
             equipment = input("Enter the new equipment you would like to reserve: ")
             new_start = input("Enter the new start time: ")
             new_end = input("Enter the new end time: ")
+            while new_start == new_end:
+                new_end = input("Enter end time different than start time: ")
             reservation = cassandra_client.get_reservation(reservation_id)
             if reservation:
                 reservation.equipment = equipment
@@ -78,7 +75,7 @@ def main():
         # EXIT
         elif choice == '5':
             print("Thank you for using our reservation system.")
-            is_working = False
+            break
 
         # WRONG INPUT
         else:

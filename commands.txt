@@ -6,7 +6,7 @@ sudo docker run --name cas2 -e CASSANDRA_SEEDS="$(sudo docker inspect --format='
 
 sudo docker container ls
 sudo docker exec -it CONTAINER_NAME cqlsh
-sudo CREATE KEYSPACE IF NOT EXISTS squash WITH REPLICATION={'class': 'SimpleStrategy', 'replication_factor': 1};
+CREATE KEYSPACE IF NOT EXISTS squash WITH REPLICATION={'class': 'SimpleStrategy', 'replication_factor': 2};
 
 # deleting:
 sudo docker stop cas1

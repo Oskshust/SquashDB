@@ -3,6 +3,8 @@
 * Oskar Szudzik 148245,
 * Krystian Moras 148243
 
+![example](https://github.com/Oskshust/SquashDB/assets/72855171/1651dd41-2993-4229-8ede-697fd3f6b4c0)
+
 ## Description
 
 The project is supposed to be a reservation system for squash courts. 

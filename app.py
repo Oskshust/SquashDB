@@ -28,7 +28,7 @@ app.layout = html.Div([
     dcc.Store(id="thread_key",data=None),
     dcc.Interval(
             id='interval-component',
-            interval=1*1000, # in milliseconds
+            interval=1*100, # in milliseconds
             n_intervals=0
         ),
     # FORM WITH USER NAME, EQUIPMENT, START TIME AND END TIME
@@ -108,7 +108,7 @@ app.layout = html.Div([
         html.Button(id='cancel_button3', n_clicks=0, children='Stop random requests',disabled=True),
         
         html.Button(id='stress-button4', n_clicks=0, children='Immeadiate occupancy'),
-        html.Button(id='stress-button5', n_clicks=0, children='Stress 5'),
+        html.Button(id='stress-button5', n_clicks=0, children='Constant reservation and cancellations'),
         html.Button(id='reset-all',children="Reset all"),
         html.Div(id='stress-output1'),
         html.Div(id='stress-output2'),
@@ -190,7 +190,7 @@ def update_output1(n_clicks):
                 prevent_initial_call=True)
 def update_output2(n_clicks):
     start = timer()
-    reservation = Reservation(1,"CLIENT",0,"RACKET","0","1")
+    reservation = Reservation(1,"CLIENT",1,"RACKET","0","1")
     for i in range(1000):
         cassandra_client.update_reservation(reservation)
     end = timer()
@@ -283,14 +283,24 @@ def update_output4(n_clicks):
 
 
     return 
+import time
 
 @app.callback(Output('stress-output5', 'children'),
-                [Input('stress-button5', 'n_clicks')])
+                [Input('stress-button5', 'n_clicks')],
+                prevent_initial_call=True)
 def update_output5(n_clicks):
-    return u'''
-        The Button has been pressed {} times
-    '''.format(n_clicks)
-
+    def constant_reservations_and_cancellations():
+        for i in range(50):
+            reservation = Reservation(4242,"Undecided",1,"Racket","42","43")
+            result = cassandra_client.create_reservation(reservation)
+            time.sleep(0.2)
+            print(result)
+            cassandra_client.cancel_reservation(4242)
+            time.sleep(0.2)
+    thread = threading.Thread(target=constant_reservations_and_cancellations,daemon=True)
+    thread.start()
+        
+    return "Constant reservations for 10 seconds"
 
 # Update courts every interval
 
@@ -309,4 +319,4 @@ def update_courts(n_intervals):
 
 
 if __name__ == '__main__':
-    app.run_server(debug=True)
+    app.run_server(debug=False)

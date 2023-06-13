@@ -15,7 +15,7 @@ background_callback_manager = DiskcacheManager(cache)
 app = dash.Dash(__name__,background_callback_manager=background_callback_manager)
 
 
-nodes = ['172.17.0.2', '172.17.0.3']
+nodes = ['172.17.0.2', '172.17.0.3', '172.17.0.4']
 cassandra_client = CassandraClient(nodes)
 
 cassandra_client.setup()
@@ -191,6 +191,7 @@ def update_output1(n_clicks):
 def update_output2(n_clicks):
     start = timer()
     reservation = Reservation(1,"CLIENT",1,"RACKET","0","1")
+    cassandra_client.create_reservation(reservation)
     for i in range(1000):
         reservation.equipment = random.choice(["Ball","Racket","Thrower"])
         cassandra_client.equipment_update_reservation(reservation)

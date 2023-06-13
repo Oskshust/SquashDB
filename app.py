@@ -192,7 +192,8 @@ def update_output2(n_clicks):
     start = timer()
     reservation = Reservation(1,"CLIENT",1,"RACKET","0","1")
     for i in range(1000):
-        cassandra_client.update_reservation(reservation)
+        reservation.equipment = random.choice(["Ball","Racket","Thrower"])
+        cassandra_client.equipment_update_reservation(reservation)
     end = timer()
     return f"Finished client makes the same request test in {end-start}"
 
